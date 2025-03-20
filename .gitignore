@@ -1,0 +1,39 @@
+# General Node.js ignores
+node_modules/
+dist/
+build/
+.DS_Store
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnp*
+
+# Environment variables
+.env
+*.env.local
+*.env.*.local
+
+# Testing
+coverage/
+.nyc_output/
+
+# Editor and IDE related
+.idea
+.vscode
+*.swp
+*~
+tmp/
+temp/
+
+# Prisma
+.prisma/*
+!prisma/schema.prisma  # Keep the schema file
+prisma/dev.db
+prisma/sqlite-migration.lock
+# SQLite database
+dev.db
+
+# Optional: Ignore OS-specific files
+Thumbs.db
+ehthumbs.db
