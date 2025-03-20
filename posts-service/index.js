@@ -10,7 +10,6 @@ import express from 'express';
 import cors from 'cors';
 import { expressMiddleware } from '@apollo/server/express4';
 
-
 const prisma = new PrismaClient();
 const pubsub = new PubSub();
 
@@ -29,6 +28,8 @@ const typeDefs = `#graphql
 
   type Mutation {
     createPost(title: String!, content: String!, authorId: Int!): Post
+    updatePost(id: Int!, title: String!, content: String!): Post
+    deletePost(id: Int!): Post
   }
 
   type Subscription {
@@ -43,19 +44,22 @@ const resolvers = {
   },
   Mutation: {
     createPost: async (_, { title, content, authorId }) => {
-      // Replace with your desired values
-      const newPost = await prisma.post.create({
-        data: {
-          title: "Hello from Subscription!",
-          content: "This post was created by a subscription!",
-          authorId: 1, // Or any valid authorId
-        },
-      });
-      pubsub.publish("POST_ADDED", { postAdded: newPost });
+      const newPost = await prisma.post.create({ data: { title, content, authorId } });
+      pubsub.publish('POST_ADDED', { postAdded: newPost });
       return newPost;
     },
+    updatePost: async (_, { id, title, content }) => {
+      const updatedPost = await prisma.post.update({
+        where: { id },
+        data: { title, content },
+      });
+      return updatedPost;
+    },
+    deletePost: async (_, { id }) => {
+      await prisma.post.delete({ where: { id } });
+      return null;
+    },
   },
-  
   Subscription: {
     postAdded: {
       subscribe: () => pubsub.asyncIterator(['POST_ADDED']),
@@ -102,10 +106,9 @@ const server = new ApolloServer({
 
 const startApolloServer = async () => {
   await server.start();
-app.use('/graphql', cors(), express.json(), expressMiddleware(server, {
-  context: async ({ req }) => ({ token: req.headers.authorization }),
-}));
-
+  app.use('/graphql', cors(), express.json(), expressMiddleware(server, {
+    context: async ({ req }) => ({ token: req.headers.authorization }),
+  }));
   const PORT = 4002;
   // Now that our HTTP server is fully set up, actually listen.
   httpServer.listen(PORT, () => {
@@ -113,5 +116,5 @@ app.use('/graphql', cors(), express.json(), expressMiddleware(server, {
     console.log(`🚀 Subscription endpoint ready at ws://localhost:${PORT}/graphql`);
   });
 };
-
+app.use(cors());
 startApolloServer();
